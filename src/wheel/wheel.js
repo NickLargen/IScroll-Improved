@@ -34,23 +34,39 @@
 			that.wheelTimeout = undefined;
 		}, 400);
 
-		if ( 'deltaX' in e ) {
-			if (e.deltaMode === 1) {
-				wheelDeltaX = -e.deltaX * this.options.mouseWheelSpeed;
-				wheelDeltaY = -e.deltaY * this.options.mouseWheelSpeed;
-			} else {
-				wheelDeltaX = -e.deltaX;
-				wheelDeltaY = -e.deltaY;
-			}
-		} else if ( 'wheelDeltaX' in e ) {
-			wheelDeltaX = e.wheelDeltaX / 120 * this.options.mouseWheelSpeed;
-			wheelDeltaY = e.wheelDeltaY / 120 * this.options.mouseWheelSpeed;
-		} else if ( 'wheelDelta' in e ) {
-			wheelDeltaX = wheelDeltaY = e.wheelDelta / 120 * this.options.mouseWheelSpeed;
-		} else if ( 'detail' in e ) {
-			wheelDeltaX = wheelDeltaY = -e.detail / 3 * this.options.mouseWheelSpeed;
+		var mouseWheelSpeed = this.options.mouseWheelSpeed;
+
+	    //Standardized WheelEvent interface can now vary scrolls based on Windows mouse preferences
+	    //It represents downward scrolls as positive numbers
+	    //Note: IE always gives pixels, where each line is 5% of the document scrollHeight and each page is 100%
+		if ('deltaX' in e) {
+		    if (e.deltaMode === 0) { //Pixels
+		        //Webkit always reports 100, IE gives number based on document height
+		        //FUTURE: Determine desired scrolling behavior, magic number is here
+		        //to maintain current chrome scroll speed and keep it consistent with older versions
+		        wheelDeltaX = -e.deltaX * .03 * mouseWheelSpeed;
+		        wheelDeltaY = -e.deltaY * .03 * mouseWheelSpeed;
+		    } else if (e.deltaMode === 1) { //Lines
+		        wheelDeltaX = -e.deltaX * mouseWheelSpeed;
+		        wheelDeltaY = -e.deltaY * mouseWheelSpeed;
+		    } else if (e.deltaMode === 2) { //Pages
+		        //TODO: Does currentTarget need a null check?
+		        wheelDeltaX = -e.deltaX * e.currentTarget.offsetWidth;
+		        wheelDeltaY = -e.deltaY * e.currentTarget.offsetHeight;
+		    }
+		} else if ('wheelDeltaX' in e) {
+		    //Old versions of Chrome supported horizontal scrolling
+		    wheelDeltaX = e.wheelDeltaX / 40 * mouseWheelSpeed;
+		    wheelDeltaY = e.wheelDeltaY / 40 * mouseWheelSpeed;
+		} else if ('wheelDelta' in e) {
+		    //Old non-FF browsers reported -120 for a single downard scroll
+		    //The default Windows scroll is 3 lines, so a factor of 40 is recommended by MDN
+		    wheelDeltaX = wheelDeltaY = e.wheelDelta / 40 * mouseWheelSpeed;
+		} else if ('detail' in e) {
+		    //Old versions of Firefox reported number of lines scrolled down
+		    wheelDeltaX = wheelDeltaY = -e.detail * mouseWheelSpeed;
 		} else {
-			return;
+		    return;
 		}
 
 		wheelDeltaX *= this.options.invertWheelDirection;
