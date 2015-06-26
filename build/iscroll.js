@@ -1858,8 +1858,8 @@ Indicator.prototype = {
 		}
 
 		if ( this.scroller.hasHorizontalScroll && this.scroller.hasVerticalScroll ) {
-			utils.addClass(this.wrapper, 'iScrollBothScrollbars');
-			utils.removeClass(this.wrapper, 'iScrollLoneScrollbar');
+			utils.addClass(this.wrapper, 'iscroll-both-scrollbars');
+			utils.removeClass(this.wrapper, 'iscroll-lone-scrollbar');
 
 			if ( this.options.defaultScrollbars && this.options.customStyle ) {
 				if ( this.options.listenX ) {
@@ -1869,8 +1869,8 @@ Indicator.prototype = {
 				}
 			}
 		} else {
-			utils.removeClass(this.wrapper, 'iScrollBothScrollbars');
-			utils.addClass(this.wrapper, 'iScrollLoneScrollbar');
+			utils.removeClass(this.wrapper, 'iscroll-both-scrollbars');
+			utils.addClass(this.wrapper, 'iscroll-lone-scrollbar');
 
 			if ( this.options.defaultScrollbars && this.options.customStyle ) {
 				if ( this.options.listenX ) {
