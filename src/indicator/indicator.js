@@ -26,7 +26,7 @@ function createDefaultScrollbar (direction, interactive, type) {
 
 	scrollbar.style.cssText += ';overflow:hidden';
 
-	if ( !interactive ) {
+	if (!interactive) {
 		scrollbar.style.pointerEvents = 'none';
 	}
 
@@ -163,11 +163,9 @@ Indicator.prototype = {
 
 	_move: function (e) {
 		var point = e.touches ? e.touches[0] : e,
-			deltaX, deltaY,
-			newX, newY,
-			timestamp = utils.getTime();
+				deltaX, deltaY;
 
-		if ( !this.moved ) {
+		if (!this.moved) {
 			this.scroller._execEvent('scrollStart');
 		}
 
@@ -179,10 +177,10 @@ Indicator.prototype = {
 		deltaY = point.pageY - this.lastPointY;
 		this.lastPointY = point.pageY;
 
-		newX = this.x + deltaX;
-		newY = this.y + deltaY;
+		this.x = this.x + deltaX;
+		this.y = this.y + deltaY;
 
-		this._pos(newX, newY);
+		this._pos(this.x, this.y);
 
 // INSERT POINT: indicator._move
 
@@ -395,7 +393,7 @@ Indicator.prototype = {
 		x = this.options.listenX ? Math.round(x / this.sizeRatioX) : this.scroller.x;
 		y = this.options.listenY ? Math.round(y / this.sizeRatioY) : this.scroller.y;
 
-		this.scroller.scrollTo(x, y);
+		this.scroller._translate(x, y, true);
 	},
 
 	fade: function (val, hold) {

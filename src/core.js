@@ -64,6 +64,8 @@ function IScroll (el, options) {
 	this.directionY = 0;
 	this._events = {};
 
+    this.lastTransform = 0;
+
 // INSERT POINT: DEFAULTS
 
 	this._init();
@@ -235,7 +237,7 @@ IScroll.prototype = {
 
 		this.moved = true;
 
-		this._translate(newX, newY);
+		this._translate(newX, newY, true);
 
 /* REPLACE START: _move */
 
@@ -522,7 +524,18 @@ IScroll.prototype = {
 
 	},
 
-	_translate: function (x, y) {
+	_translate: function (x, y, canSkip) {
+	    this.x = x;
+	    this.y = y;
+
+	    //Translate is an expensive operation on IE and shouldn't be done multiple times per frame
+	    var currentTime = Date.now();
+	    if (canSkip === true && currentTime - this.lastTransform < 16) {
+	        return;
+	    }
+
+	    this.lastTransform = currentTime;
+
 		if ( this.options.useTransform ) {
 
 /* REPLACE START: _translate */

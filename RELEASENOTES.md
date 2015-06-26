@@ -1,5 +1,17 @@
 # Release notes for iScroll
 
+## Version Nick
+
+// ***** BREAKING CHANGES *****
+/*
+Class names have been changed from camel case to hyphens (eg iscroll-vertical-scrollbar instead of iScrollVerticalScrollbar)
+*/
+
+// ***** NOTABLE CHANGES *****
+/*
+options.mouseWheelSpeed now affects mouse wheel speed in chrome and IE
+*/
+
 ---
 
 ##  Version 5.1.1 - 2014.01.10

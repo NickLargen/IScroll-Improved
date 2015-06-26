@@ -322,6 +322,8 @@ function IScroll (el, options) {
 	this.directionY = 0;
 	this._events = {};
 
+    this.lastTransform = 0;
+
 // INSERT POINT: DEFAULTS
 
 	this._init();
@@ -509,7 +511,7 @@ IScroll.prototype = {
 
 		this.moved = true;
 
-		this._translate(newX, newY);
+		this._translate(newX, newY, true);
 
 /* REPLACE START: _move */
 
@@ -829,7 +831,18 @@ IScroll.prototype = {
 
 	},
 
-	_translate: function (x, y) {
+	_translate: function (x, y, canSkip) {
+	    this.x = x;
+	    this.y = y;
+
+	    //Translate is an expensive operation on IE and shouldn't be done multiple times per frame
+	    var currentTime = Date.now();
+	    if (canSkip === true && currentTime - this.lastTransform < 16) {
+	        return;
+	    }
+
+	    this.lastTransform = currentTime;
+
 		if ( this.options.useTransform ) {
 
 /* REPLACE START: _translate */
@@ -1053,23 +1066,39 @@ IScroll.prototype = {
 			that.wheelTimeout = undefined;
 		}, 400);
 
-		if ( 'deltaX' in e ) {
-			if (e.deltaMode === 1) {
-				wheelDeltaX = -e.deltaX * this.options.mouseWheelSpeed;
-				wheelDeltaY = -e.deltaY * this.options.mouseWheelSpeed;
-			} else {
-				wheelDeltaX = -e.deltaX;
-				wheelDeltaY = -e.deltaY;
-			}
-		} else if ( 'wheelDeltaX' in e ) {
-			wheelDeltaX = e.wheelDeltaX / 120 * this.options.mouseWheelSpeed;
-			wheelDeltaY = e.wheelDeltaY / 120 * this.options.mouseWheelSpeed;
-		} else if ( 'wheelDelta' in e ) {
-			wheelDeltaX = wheelDeltaY = e.wheelDelta / 120 * this.options.mouseWheelSpeed;
-		} else if ( 'detail' in e ) {
-			wheelDeltaX = wheelDeltaY = -e.detail / 3 * this.options.mouseWheelSpeed;
+		var mouseWheelSpeed = this.options.mouseWheelSpeed;
+
+	    //Standardized WheelEvent interface can now vary scrolls based on Windows mouse preferences
+	    //It represents downward scrolls as positive numbers
+	    //Note: IE always gives pixels, where each line is 5% of the document scrollHeight and each page is 100%
+		if ('deltaX' in e) {
+		    if (e.deltaMode === 0) { //Pixels
+		        //Webkit always reports 100, IE gives number based on document height
+		        //FUTURE: Determine desired scrolling behavior, magic number is here
+		        //to maintain current chrome scroll speed and keep it consistent with older versions
+		        wheelDeltaX = -e.deltaX * .03 * mouseWheelSpeed;
+		        wheelDeltaY = -e.deltaY * .03 * mouseWheelSpeed;
+		    } else if (e.deltaMode === 1) { //Lines
+		        wheelDeltaX = -e.deltaX * mouseWheelSpeed;
+		        wheelDeltaY = -e.deltaY * mouseWheelSpeed;
+		    } else if (e.deltaMode === 2) { //Pages
+		        //TODO: Does currentTarget need a null check?
+		        wheelDeltaX = -e.deltaX * e.currentTarget.offsetWidth;
+		        wheelDeltaY = -e.deltaY * e.currentTarget.offsetHeight;
+		    }
+		} else if ('wheelDeltaX' in e) {
+		    //Old versions of Chrome supported horizontal scrolling
+		    wheelDeltaX = e.wheelDeltaX / 40 * mouseWheelSpeed;
+		    wheelDeltaY = e.wheelDeltaY / 40 * mouseWheelSpeed;
+		} else if ('wheelDelta' in e) {
+		    //Old non-FF browsers reported -120 for a single downard scroll
+		    //The default Windows scroll is 3 lines, so a factor of 40 is recommended by MDN
+		    wheelDeltaX = wheelDeltaY = e.wheelDelta / 40 * mouseWheelSpeed;
+		} else if ('detail' in e) {
+		    //Old versions of Firefox reported number of lines scrolled down
+		    wheelDeltaX = wheelDeltaY = -e.detail * mouseWheelSpeed;
 		} else {
-			return;
+		    return;
 		}
 
 		wheelDeltaX *= this.options.invertWheelDirection;
@@ -1583,30 +1612,30 @@ function createDefaultScrollbar (direction, interactive, type) {
 	var scrollbar = document.createElement('div'),
 		indicator = document.createElement('div');
 
-	if ( type === true ) {
+	if (type === true) {
 		scrollbar.style.cssText = 'position:absolute;z-index:9999';
 		indicator.style.cssText = '-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;position:absolute;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.9);border-radius:3px';
 	}
 
-	indicator.className = 'iScrollIndicator';
+	indicator.className = 'iscroll-indicator';
 
-	if ( direction == 'h' ) {
-		if ( type === true ) {
+	if (direction == 'h') {
+		if (type === true) {
 			scrollbar.style.cssText += ';height:7px;left:2px;right:2px;bottom:0';
 			indicator.style.height = '100%';
 		}
-		scrollbar.className = 'iScrollHorizontalScrollbar';
+		scrollbar.className = 'iscroll-horizontal-scrollbar';
 	} else {
-		if ( type === true ) {
+		if (type === true) {
 			scrollbar.style.cssText += ';width:7px;bottom:2px;top:2px;right:1px';
 			indicator.style.width = '100%';
 		}
-		scrollbar.className = 'iScrollVerticalScrollbar';
+		scrollbar.className = 'iscroll-vertical-scrollbar';
 	}
 
 	scrollbar.style.cssText += ';overflow:hidden';
 
-	if ( !interactive ) {
+	if (!interactive) {
 		scrollbar.style.pointerEvents = 'none';
 	}
 
@@ -1743,11 +1772,9 @@ Indicator.prototype = {
 
 	_move: function (e) {
 		var point = e.touches ? e.touches[0] : e,
-			deltaX, deltaY,
-			newX, newY,
-			timestamp = utils.getTime();
+				deltaX, deltaY;
 
-		if ( !this.moved ) {
+		if (!this.moved) {
 			this.scroller._execEvent('scrollStart');
 		}
 
@@ -1759,10 +1786,10 @@ Indicator.prototype = {
 		deltaY = point.pageY - this.lastPointY;
 		this.lastPointY = point.pageY;
 
-		newX = this.x + deltaX;
-		newY = this.y + deltaY;
+		this.x = this.x + deltaX;
+		this.y = this.y + deltaY;
 
-		this._pos(newX, newY);
+		this._pos(this.x, this.y);
 
 // INSERT POINT: indicator._move
 
@@ -1975,7 +2002,7 @@ Indicator.prototype = {
 		x = this.options.listenX ? Math.round(x / this.sizeRatioX) : this.scroller.x;
 		y = this.options.listenY ? Math.round(y / this.sizeRatioY) : this.scroller.y;
 
-		this.scroller.scrollTo(x, y);
+		this.scroller._translate(x, y, true);
 	},
 
 	fade: function (val, hold) {
