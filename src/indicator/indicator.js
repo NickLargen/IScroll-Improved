@@ -43,6 +43,8 @@ function Indicator (scroller, options) {
 	this.scroller = scroller;
 
 	this.options = {
+		//These values are only used if they are not passed in from _initIndicators
+		//See indicator build.json and the default options in core.js
 		listenX: true,
 		listenY: true,
 		interactive: false,
@@ -51,7 +53,8 @@ function Indicator (scroller, options) {
 		shrink: false,
 		fade: false,
 		speedRatioX: 0,
-		speedRatioY: 0
+		speedRatioY: 0,
+		minimumSize: 15
 	};
 
 	for ( var i in options ) {
@@ -240,6 +243,7 @@ Indicator.prototype = {
 	refresh: function () {
 		this.transitionTime();
 
+		//Disable indicators if scrolling is unavailable
 		if ( this.options.listenX && !this.options.listenY ) {
 			this.indicatorStyle.display = this.scroller.hasHorizontalScroll ? 'block' : 'none';
 		} else if ( this.options.listenY && !this.options.listenX ) {
@@ -248,6 +252,7 @@ Indicator.prototype = {
 			this.indicatorStyle.display = this.scroller.hasHorizontalScroll || this.scroller.hasVerticalScroll ? 'block' : 'none';
 		}
 
+		//Check if scrolling directions have changed
 		if ( this.scroller.hasHorizontalScroll && this.scroller.hasVerticalScroll ) {
 			utils.addClass(this.wrapper, 'iscroll-both-scrollbars');
 			utils.removeClass(this.wrapper, 'iscroll-lone-scrollbar');
@@ -274,10 +279,12 @@ Indicator.prototype = {
 
 		var r = this.wrapper.offsetHeight;	// force refresh
 
+		//Update dimensions
 		if ( this.options.listenX ) {
 			this.wrapperWidth = this.wrapper.clientWidth;
-			if ( this.options.resize ) {
-				this.indicatorWidth = Math.max(Math.round(this.wrapperWidth * this.wrapperWidth / (this.scroller.scrollerWidth || this.wrapperWidth || 1)), 8);
+			if (this.options.resize) {
+				this.indicatorWidth = Math.max(Math.round(this.wrapperWidth * this.wrapperWidth /
+					(this.scroller.scrollerWidth || this.wrapperWidth || 1)), this.options.minimumSize);
 				this.indicatorStyle.width = this.indicatorWidth + 'px';
 			} else {
 				this.indicatorWidth = this.indicator.clientWidth;
@@ -298,13 +305,14 @@ Indicator.prototype = {
 
 		if ( this.options.listenY ) {
 			this.wrapperHeight = this.wrapper.clientHeight;
-			if ( this.options.resize ) {
-				this.indicatorHeight = Math.max(Math.round(this.wrapperHeight * this.wrapperHeight / (this.scroller.scrollerHeight || this.wrapperHeight || 1)), 8);
+			if (this.options.resize) {
+				this.indicatorHeight = Math.max(Math.round(this.wrapperHeight * this.wrapperHeight /
+					(this.scroller.scrollerHeight || this.wrapperHeight || 1)), this.options.minimumSize);
 				this.indicatorStyle.height = this.indicatorHeight + 'px';
 			} else {
 				this.indicatorHeight = this.indicator.clientHeight;
 			}
-
+			
 			this.maxPosY = this.wrapperHeight - this.indicatorHeight;
 
 			if ( this.options.shrink == 'clip' ) {

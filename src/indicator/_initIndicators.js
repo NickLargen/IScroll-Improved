@@ -20,7 +20,8 @@
 					resize: this.options.resizeScrollbars,
 					shrink: this.options.shrinkScrollbars,
 					fade: this.options.fadeScrollbars,
-					listenX: false
+					listenX: false,
+					minimumSize: this.options.minimumIndicatorSize
 				};
 
 				this.wrapper.appendChild(indicator.el);
@@ -37,7 +38,8 @@
 					resize: this.options.resizeScrollbars,
 					shrink: this.options.shrinkScrollbars,
 					fade: this.options.fadeScrollbars,
-					listenY: false
+					listenY: false,
+					minimumSize: this.options.minimumIndicatorSize
 				};
 
 				this.wrapper.appendChild(indicator.el);
