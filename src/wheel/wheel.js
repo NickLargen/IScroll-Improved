@@ -44,8 +44,8 @@
 		        //Webkit always reports 100, IE gives number based on document height
 		        //FUTURE: Determine desired scrolling behavior, magic number is here
 		        //to maintain current chrome scroll speed and keep it consistent with older versions
-		        wheelDeltaX = -e.deltaX * .03 * mouseWheelSpeed;
-		        wheelDeltaY = -e.deltaY * .03 * mouseWheelSpeed;
+		        wheelDeltaX = -e.deltaX * 0.03 * mouseWheelSpeed;
+		        wheelDeltaY = -e.deltaY * 0.03 * mouseWheelSpeed;
 		    } else if (e.deltaMode === 1) { //Lines
 		        wheelDeltaX = -e.deltaX * mouseWheelSpeed;
 		        wheelDeltaY = -e.deltaY * mouseWheelSpeed;

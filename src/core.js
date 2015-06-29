@@ -530,7 +530,7 @@ IScroll.prototype = {
 
 	    //Translate is an expensive operation on IE and shouldn't be done multiple times per frame
 	    var currentTime = Date.now();
-	    if (canSkip === true && currentTime - this.lastTransform < 16) {
+	    if (canSkip === true && currentTime - this.lastTransform < 20) {
 	        return;
 	    }
 
